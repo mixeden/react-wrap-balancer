@@ -71,16 +71,26 @@ const relayout: RelayoutFn = (id, ratio, wrapper) => {
   // the function.
   if (!wrapper['__wrap_o']) {
     if (typeof ResizeObserver !== 'undefined') {
-      ;(wrapper['__wrap_o'] = new ResizeObserver(() => {
-        self.__wrap_b(0, +wrapper.dataset.brr, wrapper)
+      ; (wrapper['__wrap_o'] = new ResizeObserver(() => {
+        const resizeObserverCallback = () => {
+          requestAnimationFrame(() => {
+            self.__wrap_b(0, +wrapper.dataset.brr, wrapper);
+          });
+        };
+
+        wrapper['__wrap_o'] = new ResizeObserver(() => {
+          // Debounce the callback
+          clearTimeout(wrapper['__wrap_t']);
+          wrapper['__wrap_t'] = setTimeout(resizeObserverCallback, 10) as unknown as number;
+        });
       })).observe(container)
     } else {
       // Silently ignore ResizeObserver for production builds
       if (process.env.NODE_ENV === 'development') {
         console.warn(
           'The browser you are using does not support the ResizeObserver API. ' +
-            'Please consider add polyfill for this API to avoid potential layout shifts or upgrade your browser. ' +
-            'Read more: https://github.com/shuding/react-wrap-balancer#browser-support-information'
+          'Please consider add polyfill for this API to avoid potential layout shifts or upgrade your browser. ' +
+          'Read more: https://github.com/shuding/react-wrap-balancer#browser-support-information'
         )
       }
     }
